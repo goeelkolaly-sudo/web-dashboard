@@ -9,7 +9,7 @@ export default function LoginScreen({ onLoginSuccess }) {
   const [error, setError] = useState('');
   const canvasRef = useRef(null);
 
-  // Subtle interactive stars & constellation lines
+  // Interactive stars & network lines
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -23,20 +23,20 @@ export default function LoginScreen({ onLoginSuccess }) {
     resize();
     window.addEventListener('resize', resize);
 
-    const mouse = { x: null, y: null, radius: 130 };
+    const mouse = { x: null, y: null, radius: 150 };
     const handleMouseMove = (e) => {
       mouse.x = e.clientX;
       mouse.y = e.clientY;
     };
     window.addEventListener('mousemove', handleMouseMove);
 
-    const stars = Array.from({ length: 70 }, () => ({
+    const stars = Array.from({ length: 85 }, () => ({
       x: Math.random() * canvas.width,
       y: Math.random() * canvas.height,
-      vx: (Math.random() - 0.5) * 0.4,
-      vy: (Math.random() - 0.5) * 0.4,
-      size: Math.random() * 1.6 + 0.5,
-      alpha: Math.random() * 0.6 + 0.25,
+      vx: (Math.random() - 0.5) * 0.7,
+      vy: (Math.random() - 0.5) * 0.7,
+      size: Math.random() * 1.8 + 0.6,
+      alpha: Math.random() * 0.7 + 0.25,
     }));
 
     const render = () => {
@@ -52,18 +52,18 @@ export default function LoginScreen({ onLoginSuccess }) {
 
         ctx.beginPath();
         ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(34, 211, 238, ${s.alpha})`;
+        ctx.fillStyle = `rgba(103, 232, 249, ${s.alpha})`;
         ctx.fill();
 
         for (let j = i + 1; j < stars.length; j++) {
           const s2 = stars[j];
           const dist = Math.hypot(s.x - s2.x, s.y - s2.y);
-          if (dist < 105) {
+          if (dist < 115) {
             ctx.beginPath();
             ctx.moveTo(s.x, s.y);
             ctx.lineTo(s2.x, s2.y);
-            ctx.strokeStyle = `rgba(20, 184, 166, ${(1 - dist / 105) * 0.22})`;
-            ctx.lineWidth = 0.7;
+            ctx.strokeStyle = `rgba(45, 212, 191, ${(1 - dist / 115) * 0.3})`;
+            ctx.lineWidth = 0.8;
             ctx.stroke();
           }
         }
@@ -74,8 +74,8 @@ export default function LoginScreen({ onLoginSuccess }) {
             ctx.beginPath();
             ctx.moveTo(s.x, s.y);
             ctx.lineTo(mouse.x, mouse.y);
-            ctx.strokeStyle = `rgba(45, 212, 191, ${(1 - mdist / mouse.radius) * 0.45})`;
-            ctx.lineWidth = 0.9;
+            ctx.strokeStyle = `rgba(165, 243, 252, ${(1 - mdist / mouse.radius) * 0.6})`;
+            ctx.lineWidth = 1;
             ctx.stroke();
           }
         }
@@ -110,39 +110,50 @@ export default function LoginScreen({ onLoginSuccess }) {
   };
 
   return (
-    <div className="relative min-h-screen w-full overflow-hidden bg-[#04141c] text-slate-100 flex items-center justify-center lg:justify-between px-6 lg:px-16 xl:px-24 py-8">
-      {/* City Background Image */}
-      <div
-        className="absolute inset-0 bg-cover bg-center opacity-55 scale-105"
-        style={{ backgroundImage: "url('/neom-bg.jpg')" }}
+    <div className="relative min-h-screen w-full overflow-hidden bg-[#051b26] text-slate-100 flex items-center justify-center lg:justify-between px-6 lg:px-16 xl:px-24 py-8">
+      {/* Bottom-to-Top Smooth Motion */}
+      <style>{`
+        @keyframes riseUpMotion {
+          0% {
+            transform: translateY(24px);
+          }
+          50% {
+            transform: translateY(-16px);
+          }
+          100% {
+            transform: translateY(24px);
+          }
+        }
+        .animate-rise-up {
+          animation: riseUpMotion 16s ease-in-out infinite;
+        }
+      `}</style>
+
+      {/* Full Image Anchored From Bottom to Top */}
+      <img
+        src="/neom-bg.jpg"
+        alt="NEOM City"
+        className="pointer-events-none fixed inset-x-0 bottom-0 w-full h-full object-cover object-bottom opacity-80 animate-rise-up will-change-transform"
       />
 
-      {/* Blended Dark Teal Gradient */}
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-[#04141c]/70 via-[#051b26]/65 to-[#04141c]/95" />
+      {/* Bottom-to-Top Blend Overlay */}
+      <div className="pointer-events-none fixed inset-0 bg-gradient-to-t from-[#04141c]/75 via-[#062230]/45 to-[#04141c]/35" />
 
       {/* Interactive Stars Canvas */}
-      <canvas ref={canvasRef} className="pointer-events-none absolute inset-0 z-0" />
+      <canvas ref={canvasRef} className="pointer-events-none fixed inset-0 z-0" />
 
-      {/* Left / Center-Left Modern Editorial Brand Title */}
-      <div className="hidden lg:flex flex-col justify-center relative z-10 max-w-xl select-none">
-        <span className="text-[11px] font-medium uppercase tracking-[0.35em] text-cyan-300/85 mb-3">
-          Smart City Infrastructure
-        </span>
-
-        <h2 className="text-5xl xl:text-6xl font-light tracking-[0.26em] text-transparent bg-clip-text bg-gradient-to-r from-white via-cyan-100 to-cyan-300/80 leading-tight">
+      {/* Simple & Chic Brand Title */}
+      <div className="hidden lg:flex flex-col justify-center relative z-10 select-none">
+        <h2 className="text-5xl xl:text-6xl font-light tracking-[0.28em] text-transparent bg-clip-text bg-gradient-to-r from-white via-cyan-100 to-cyan-300/90 drop-shadow-[0_4px_24px_rgba(0,0,0,0.55)]">
           NEOM <span className="font-semibold">CITY</span>
         </h2>
-
-        <div className="w-28 h-[1px] bg-gradient-to-r from-cyan-400/80 to-transparent my-4" />
-
-        <p className="text-sm text-slate-200/75 font-light tracking-wide max-w-md leading-relaxed">
-          Unified IoT telemetry, intelligent traffic flow, and real-time urban monitoring.
-        </p>
+        <span className="mt-2 text-xs uppercase tracking-[0.42em] text-cyan-200/80 drop-shadow">
+          Smart City
+        </span>
       </div>
 
-      {/* Right-Aligned Glassmorphism Login Panel */}
-      <div className="relative z-10 w-full max-w-md rounded-2xl border border-cyan-400/20 bg-[#061d28]/85 backdrop-blur-xl px-8 py-10 shadow-2xl shadow-cyan-950/70">
-        {/* Shield Badge */}
+      {/* Right Login Card */}
+      <div className="relative z-10 w-full max-w-md rounded-2xl border border-cyan-300/25 bg-[#061d28]/80 backdrop-blur-xl px-8 py-10 shadow-2xl shadow-cyan-950/70">
         <div className="mx-auto mb-3 w-16 h-16 rounded-2xl bg-gradient-to-br from-cyan-400/25 to-teal-500/10 border border-cyan-300/40 flex items-center justify-center text-cyan-300 shadow-[0_0_25px_rgba(34,211,238,0.22)]">
           <ShieldCheck className="w-9 h-9" />
         </div>
@@ -156,7 +167,6 @@ export default function LoginScreen({ onLoginSuccess }) {
         </h1>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Email or User ID */}
           <div className="relative">
             <User className="w-4 h-4 text-cyan-200/80 absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input
@@ -169,7 +179,6 @@ export default function LoginScreen({ onLoginSuccess }) {
             />
           </div>
 
-          {/* Password */}
           <div className="relative">
             <Lock className="w-4 h-4 text-cyan-200/80 absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input
@@ -190,7 +199,6 @@ export default function LoginScreen({ onLoginSuccess }) {
             </button>
           </div>
 
-          {/* Remember me & Hint */}
           <div className="flex items-center justify-between text-xs pt-0.5">
             <label className="inline-flex items-center gap-2 text-cyan-100/85 cursor-pointer select-none">
               <input
@@ -201,7 +209,7 @@ export default function LoginScreen({ onLoginSuccess }) {
               />
               <span>Remember me</span>
             </label>
-            <span className="text-rose-400/90 font-mono text-[11px]">
+            <span className="text-rose-300/90 font-mono text-[11px]">
               admin / 123456
             </span>
           </div>
@@ -212,7 +220,6 @@ export default function LoginScreen({ onLoginSuccess }) {
             </div>
           )}
 
-          {/* Log In Pill Button */}
           <button
             type="submit"
             className="w-full mt-3 py-3 px-5 rounded-full bg-gradient-to-r from-[#174e63] via-[#1c627a] to-[#174e63] hover:from-cyan-600 hover:to-teal-600 border border-cyan-300/30 text-white font-semibold text-sm shadow-lg shadow-cyan-950/60 transition cursor-pointer"
