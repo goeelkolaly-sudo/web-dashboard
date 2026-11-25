@@ -132,7 +132,7 @@ export default function LoginScreen({ onLoginSuccess }) {
       {/* Full Image Anchored From Bottom to Top */}
       <img
         src="/neom-bg.jpg"
-        alt="NEOM City"
+        alt="Smart City"
         className="pointer-events-none fixed inset-x-0 bottom-0 w-full h-full object-cover object-bottom opacity-80 animate-rise-up will-change-transform"
       />
 
@@ -145,10 +145,10 @@ export default function LoginScreen({ onLoginSuccess }) {
       {/* Simple & Chic Brand Title */}
       <div className="hidden lg:flex flex-col justify-center relative z-10 select-none">
         <h2 className="text-5xl xl:text-6xl font-light tracking-[0.28em] text-transparent bg-clip-text bg-gradient-to-r from-white via-cyan-100 to-cyan-300/90 drop-shadow-[0_4px_24px_rgba(0,0,0,0.55)]">
-          NEOM <span className="font-semibold">CITY</span>
+          SMART <span className="font-semibold">CITY</span>
         </h2>
         <span className="mt-2 text-xs uppercase tracking-[0.42em] text-cyan-200/80 drop-shadow">
-          Smart City
+          Future Digital City
         </span>
       </div>
 
@@ -159,7 +159,7 @@ export default function LoginScreen({ onLoginSuccess }) {
         </div>
 
         <p className="lg:hidden text-center text-xs tracking-[0.28em] text-cyan-300/90 uppercase">
-          NEOM CITY
+          SMART CITY
         </p>
 
         <h1 className="text-center text-2xl font-bold text-white mt-1 mb-7">

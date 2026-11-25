@@ -121,9 +121,9 @@ export default function App() {
         <div>
           <div className="px-2 mb-5">
             <div className="text-base font-extrabold tracking-wider text-white">
-              NEOM CITY
+              SMART CITY
             </div>
-            <div className="text-[11px] text-cyan-300/80">Smart City</div>
+            <div className="text-[11px] text-cyan-300/80">Future Digital City</div>
           </div>
 
           <nav className="space-y-1">
@@ -206,7 +206,7 @@ export default function App() {
             <div>
               <h1 className="text-xl font-bold text-white">
                 {activeTab === 'dashboard'
-                  ? 'NEOM City Dashboard'
+                  ? 'SMART City Dashboard'
                   : NAV_ITEMS.find((n) => n.id === activeTab)?.label}
               </h1>
               <p className="text-xs text-cyan-200/70">
@@ -297,7 +297,7 @@ export default function App() {
                       Welcome Back, Admin
                     </h2>
                     <p className="text-xs text-cyan-100/80 mt-0.5">
-                      NEOM City is working smoothly today.
+                      SMART City is working smoothly today.
                     </p>
                   </div>
 
@@ -332,7 +332,7 @@ export default function App() {
                     </span>
                   </div>
                   <div className="h-36 rounded-xl bg-[#04141c] border border-cyan-500/20 flex items-center justify-center text-xs text-cyan-200">
-                    NEOM City Sector Grid
+                    SMART City Sector Grid
                   </div>
                 </div>
 
