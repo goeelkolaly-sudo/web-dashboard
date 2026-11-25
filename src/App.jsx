@@ -1,192 +1,500 @@
-import { useState, useCallback } from 'react'
+import React, { useState, useEffect } from 'react';
 import {
-  Thermometer, Droplets, Wind, Trash2, Sprout, Waves, Siren, Car, Lightbulb,
-  Home, Sun, Wifi, Flame, AlertTriangle, Activity, Power,
-} from 'lucide-react'
-import { LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer, Legend } from 'recharts'
-import { useTelemetry } from './hooks/useTelemetry'
+  LayoutDashboard,
+  Home,
+  Car,
+  ParkingSquare,
+  Lightbulb,
+  Sprout,
+  Trash2,
+  Wind,
+  Sun,
+  Cpu,
+  Settings,
+  LogOut,
+  Search,
+  Bell,
+  ChevronDown,
+  ChevronRight,
+  AlertTriangle,
+  Info,
+  CheckCircle2,
+  Zap,
+  Activity,
+  DoorOpen,
+  Siren,
+  BarChart3,
+  MapPin,
+} from 'lucide-react';
+import { ResponsiveContainer, AreaChart, Area, XAxis, Tooltip } from 'recharts';
+import LoginScreen from './components/LoginScreen';
+import {
+  NAV_ITEMS,
+  INITIAL_TELEMETRY,
+  ZONES_GUIDE_DETAILS,
+} from './smartCityData';
 
-const TONE = {
-  cyan: { text: 'text-cyan', bg: 'bg-cyan', soft: 'bg-cyan/10' },
-  blue: { text: 'text-blue-400', bg: 'bg-blue-400', soft: 'bg-blue-400/10' },
-  ok: { text: 'text-ok', bg: 'bg-ok', soft: 'bg-ok/10' },
-  warn: { text: 'text-warn', bg: 'bg-warn', soft: 'bg-warn/10' },
-  danger: { text: 'text-danger', bg: 'bg-danger', soft: 'bg-danger/10' },
-}
-const stamp = () => new Date().toLocaleTimeString('en-GB')
-
-function Toggle({ on, onChange, label }) {
-  return (
-    <button role="switch" aria-checked={on} aria-label={label} onClick={onChange}
-      className={`relative h-6 w-11 shrink-0 rounded-full transition ${on ? 'bg-cyan' : 'bg-line'}`}>
-      <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-all ${on ? 'left-[22px]' : 'left-0.5'}`} />
-    </button>
-  )
-}
-
-function Kpi({ icon: Icon, label, sensor, value, tone, children }) {
-  const t = TONE[tone]
-  return (
-    <div className="rounded-xl border border-line bg-card p-4">
-      <div className="mb-3 flex items-center justify-between">
-        <span className={`rounded-lg p-2 ${t.soft} ${t.text}`}><Icon size={18} /></span>
-        <span className="text-[11px] text-slate-500">{sensor}</span>
-      </div>
-      <div className="text-xs text-slate-400">{label}</div>
-      <div className={`mt-1 text-2xl font-semibold ${t.text}`}>{value}</div>
-      {children}
-    </div>
-  )
-}
-
-function Panel({ icon: Icon, title, sensor, badge, tone = 'cyan', alarm, children, toggle }) {
-  const t = TONE[tone]
-  return (
-    <div className={`rounded-xl border bg-card p-4 transition ${alarm ? 'alarm border-danger' : 'border-line'}`}>
-      <div className="mb-3 flex items-start justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <span className={`rounded-lg p-2 ${t.soft} ${t.text} ${alarm ? 'animate-pulse' : ''}`}><Icon size={18} /></span>
-          <div>
-            <div className="text-sm font-semibold">{title}</div>
-            <div className="text-[11px] text-slate-500">{sensor}</div>
-          </div>
-        </div>
-        {toggle}
-      </div>
-      <div className={`rounded-lg px-3 py-2 text-sm font-medium ${t.soft} ${t.text} ${alarm ? 'animate-pulse' : ''}`}>{badge}</div>
-      {children && <div className="mt-2 text-xs text-slate-400">{children}</div>}
-    </div>
-  )
-}
+const ICONS = {
+  dashboard: LayoutDashboard,
+  'smart-homes': Home,
+  'smart-traffic': Car,
+  parking: ParkingSquare,
+  'street-lighting': Lightbulb,
+  'smart-irrigation': Sprout,
+  'waste-management': Trash2,
+  'air-quality': Wind,
+  'solar-energy': Sun,
+  'control-center': Cpu,
+  settings: Settings,
+};
 
 export default function App() {
-  const [emergency, setEmergency] = useState(false)
-  const [sw, setSw] = useState({ pump: false, street: true, home: false })
-  const [logs, setLogs] = useState([])
-  const { data, history } = useTelemetry(emergency)
+  const [isAuthenticated, setIsAuthenticated] = useState(
+    () => localStorage.getItem('neom_admin_auth') === 'true'
+  );
+  const [activeTab, setActiveTab] = useState('dashboard');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [telemetry, setTelemetry] = useState(INITIAL_TELEMETRY);
+  const [notice, setNotice] = useState('');
 
-  const log = useCallback((level, msg) => setLogs((l) => [{ id: Date.now() + Math.random(), level, text: `[${stamp()}] ${level}: ${msg}` }, ...l].slice(0, 50)), [])
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTelemetry((prev) => ({
+        ...prev,
+        temperature: Math.min(
+          38,
+          Math.max(22, Number((prev.temperature + (Math.random() - 0.5) * 0.6).toFixed(1)))
+        ),
+        trafficFlow: Math.min(
+          99,
+          Math.max(65, prev.trafficFlow + (Math.random() > 0.5 ? 1 : -1))
+        ),
+        wasteLevel: Math.min(
+          95,
+          Math.max(40, prev.wasteLevel + (Math.random() > 0.7 ? 1 : 0))
+        ),
+      }));
+    }, 3500);
+    return () => clearInterval(timer);
+  }, []);
 
-  const startEmergency = () => {
-    if (emergency) { setEmergency(false); log('INFO', 'Emergency mode cleared manually'); return }
-    setEmergency(true)
-    log('ALERT', 'Hospital Smoke Detected -> Ambulance Traffic Priority Activated')
+  const showNotice = (text) => {
+    setNotice(text);
+    setTimeout(() => setNotice(''), 2500);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('neom_admin_auth');
+    setIsAuthenticated(false);
+  };
+
+  const handleQuickAction = (type) => {
+    if (type === 'gate') {
+      const next = !telemetry.gateOpen;
+      setTelemetry((prev) => ({ ...prev, gateOpen: next }));
+      showNotice(next ? 'Gate Opened' : 'Gate Closed');
+    } else if (type === 'parking') {
+      const next = !telemetry.parkingReserved;
+      setTelemetry((prev) => ({ ...prev, parkingReserved: next }));
+      showNotice(next ? 'Parking Updated' : 'Parking Released');
+    } else if (type === 'alert') {
+      const next = !telemetry.emergencyMode;
+      setTelemetry((prev) => ({ ...prev, emergencyMode: next }));
+      showNotice(next ? 'Emergency Alert Sent' : 'Emergency Cleared');
+    } else if (type === 'reports') {
+      setActiveTab('control-center');
+    }
+  };
+
+  if (!isAuthenticated) {
+    return <LoginScreen onLoginSuccess={() => setIsAuthenticated(true)} />;
   }
-  const reset = () => { setEmergency(false); log('INFO', 'System reset to normal operation') }
-  const flip = (key, name, onTxt, offTxt) => {
-    const next = !sw[key]
-    setSw((s) => ({ ...s, [key]: next }))
-    log('INFO', `${name} manually switched ${next ? onTxt : offTxt}`)
-  }
 
-  const aqiGood = data.aqi <= 50
-  const aqiLabel = data.aqi <= 50 ? 'Good' : data.aqi <= 100 ? 'Moderate' : 'Unhealthy'
-  const aqiTone = data.aqi <= 50 ? 'ok' : data.aqi <= 100 ? 'warn' : 'danger'
-  const wasteTone = data.waste > 70 ? 'warn' : 'cyan'
+  const filteredNav = NAV_ITEMS.filter((item) =>
+    item.label.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
-    <div className="min-h-screen p-4 sm:p-6">
-      <div className="mx-auto max-w-7xl space-y-5">
-        {/* Header */}
-        <header className="flex flex-col gap-4 rounded-xl border border-line bg-card p-4 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <h1 className="text-xl font-bold sm:text-2xl">Smart City Control Center</h1>
-            <p className="text-sm text-slate-400">Real-Time IoT Telemetry &amp; Automation</p>
+    <div className="min-h-screen bg-[#04141c] text-slate-100 flex">
+      {/* Sidebar */}
+      <aside className="w-60 shrink-0 bg-[#061c27] border-r border-cyan-500/20 flex flex-col justify-between p-3.5">
+        <div>
+          <div className="px-2 mb-5">
+            <div className="text-base font-extrabold tracking-wider text-white">
+              NEOM CITY
+            </div>
+            <div className="text-[11px] text-cyan-300/80">Smart City</div>
           </div>
-          <div className="flex flex-wrap items-center gap-3">
-            <span className="flex items-center gap-2 rounded-full border border-ok/30 bg-ok/10 px-3 py-1.5 text-xs text-ok">
-              <span className="h-2 w-2 rounded-full bg-ok" /><Wifi size={14} /> System Online (ESP32 / MQTT Ready)
-            </span>
-            <button onClick={startEmergency}
-              className={`flex items-center gap-2 rounded-lg bg-danger px-4 py-2 text-sm font-semibold text-white hover:brightness-110 ${emergency ? 'alarm' : ''}`}>
-              <Flame size={16} /> {emergency ? 'Stop Fire Emergency' : 'Simulate Fire Emergency'}
+
+          <nav className="space-y-1">
+            {filteredNav.map((item) => {
+              const Icon = ICONS[item.id] || LayoutDashboard;
+              const active = activeTab === item.id;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveTab(item.id)}
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-medium transition cursor-pointer ${
+                    active
+                      ? 'bg-cyan-500/20 text-cyan-200 border border-cyan-400/35'
+                      : 'text-slate-300 hover:bg-cyan-500/10 border border-transparent'
+                  }`}
+                >
+                  <Icon className="w-4 h-4 text-cyan-300 shrink-0" />
+                  <span className="truncate">{item.label}</span>
+                </button>
+              );
+            })}
+          </nav>
+        </div>
+
+        <button
+          onClick={handleLogout}
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-medium text-slate-300 hover:text-rose-300 hover:bg-rose-500/10 transition cursor-pointer mt-4"
+        >
+          <LogOut className="w-4 h-4 text-cyan-400" />
+          <span>Logout</span>
+        </button>
+      </aside>
+
+      {/* Main Area */}
+      <div className="flex-1 min-w-0 flex flex-col">
+        <header className="px-6 py-3.5 border-b border-cyan-500/15 bg-[#051822] flex flex-wrap items-center justify-between gap-3">
+          <div className="relative w-full max-w-sm">
+            <Search className="w-4 h-4 text-cyan-300/70 absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search anything..."
+              className="w-full pl-9 pr-3 py-1.5 rounded-xl bg-[#082433] border border-cyan-500/20 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-cyan-400"
+            />
+          </div>
+
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => showNotice(`${telemetry.alerts.length} Active Alerts`)}
+              className="relative p-2 rounded-xl bg-[#082433] border border-cyan-500/20 text-cyan-200 cursor-pointer"
+            >
+              <Bell className="w-4 h-4" />
+              <span className="-top-1 -right-1 absolute w-4 h-4 rounded-full bg-rose-500 text-[10px] font-bold text-white flex items-center justify-center">
+                {telemetry.alerts.length}
+              </span>
             </button>
-            <button onClick={reset} className="rounded-lg border border-line px-4 py-2 text-sm hover:bg-line/50">Reset Normal</button>
+
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#082433] border border-cyan-500/25 text-xs font-semibold text-white cursor-pointer"
+            >
+              <span className="w-6 h-6 rounded-full bg-cyan-400 text-[#04141c] font-bold flex items-center justify-center">
+                A
+              </span>
+              <span>Admin</span>
+              <ChevronDown className="w-3.5 h-3.5 text-cyan-300" />
+            </button>
           </div>
         </header>
 
-        {/* Row 1: KPIs */}
-        <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-          <Kpi icon={Thermometer} label="Temperature" sensor="DHT22" value={`${Math.round(data.temp)}°C`} tone={data.temp > 35 ? 'danger' : 'cyan'} />
-          <Kpi icon={Droplets} label="Humidity" sensor="DHT22" value={`${Math.round(data.humidity)}%`} tone="blue" />
-          <Kpi icon={Wind} label="Air Quality" sensor="MQ-135" value={`${aqiLabel} (${data.aqi} AQI)`} tone={aqiTone} />
-          <Kpi icon={Trash2} label="Waste Management" sensor="Ultrasonic" value={`${data.waste}% Full`} tone={wasteTone}>
-            <div className="mt-3 h-2 overflow-hidden rounded-full bg-line">
-              <div className={`h-full ${TONE[wasteTone].bg} transition-all`} style={{ width: `${data.waste}%` }} />
+        {notice && (
+          <div className="mx-6 mt-3 px-4 py-2 rounded-xl bg-cyan-500/15 border border-cyan-400/35 text-xs text-cyan-200">
+            {notice}
+          </div>
+        )}
+
+        <main className="p-6 space-y-5 flex-1">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-xl font-bold text-white">
+                {activeTab === 'dashboard'
+                  ? 'NEOM City Dashboard'
+                  : NAV_ITEMS.find((n) => n.id === activeTab)?.label}
+              </h1>
+              <p className="text-xs text-cyan-200/70">
+                City Overview & Real-Time Insights
+              </p>
             </div>
-          </Kpi>
-          <Kpi icon={Sprout} label="Soil Moisture" sensor="Smart Irrigation" value={`${data.soil}%`} tone="cyan" />
-          <Kpi icon={Waves} label="Water Tank Level" sensor="Level sensor" value={`${data.tank}%`} tone="blue" />
-        </section>
-
-        {/* Row 2: Subsystems */}
-        <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-          <Panel icon={Siren} title="Smart Hospital & Emergency" sensor="MQ-2 & Push Button" alarm={emergency}
-            tone={emergency ? 'danger' : 'ok'} badge={emergency ? 'SMOKE DETECTED - EMERGENCY ACTIVE' : 'Normal / Safe'}>
-            {emergency ? '🔔 Buzzer ON - evacuation protocol engaged' : 'Buzzer standby - no smoke detected'}
-          </Panel>
-
-          <Panel icon={Car} title="Smart Traffic System" sensor="IR / Ultrasonic" alarm={emergency}
-            tone={emergency ? 'danger' : 'cyan'} badge={emergency ? 'AMBULANCE PRIORITY ROUTE ACTIVE' : 'Normal Flow'}>
-            {emergency ? 'All signals on the hospital route forced GREEN' : 'Adaptive signal timing running'}
-          </Panel>
-
-          <Panel icon={Sprout} title="Smart Irrigation" sensor="Soil Moisture + Pump" tone={sw.pump ? 'cyan' : 'blue'}
-            badge={`Pump ${sw.pump ? 'ON' : 'OFF'}`}
-            toggle={<Toggle on={sw.pump} label="Water pump" onChange={() => flip('pump', 'Water pump', 'ON', 'OFF')} />}>
-            Soil moisture: {data.soil}%
-          </Panel>
-
-          <Panel icon={Lightbulb} title="Smart Street Lighting" sensor="LDR + PIR" tone={sw.street ? 'warn' : 'blue'}
-            badge={sw.street ? 'Night Mode - Auto ON' : 'Lights OFF (manual override)'}
-            toggle={<Toggle on={sw.street} label="Street lights" onChange={() => flip('street', 'Street lighting', 'ON', 'OFF')} />}>
-            Brightness follows ambient light and motion
-          </Panel>
-
-          <Panel icon={Home} title="Smart Homes & Education" sensor="PIR + RFID" tone="cyan" badge="2 Active Zones"
-            toggle={<Toggle on={sw.home} label="Home lighting and fan" onChange={() => flip('home', 'Home lighting/fan', 'ON', 'OFF')} />}>
-            Lighting / fan: {sw.home ? 'ON' : 'OFF'}
-          </Panel>
-
-          <Panel icon={Sun} title="Solar Energy Grid" sensor="Voltage sensor" tone="ok" badge={`Active - Generating ${data.solar}V`}>
-            Clean energy feeding the city grid
-          </Panel>
-        </section>
-
-        {/* Row 3: Logs + chart */}
-        <section className="grid grid-cols-1 gap-4 lg:grid-cols-5">
-          <div className="rounded-xl border border-line bg-card p-4 lg:col-span-2">
-            <div className="mb-3 flex items-center gap-2 text-sm font-semibold"><AlertTriangle size={16} /> Alerts &amp; Event Log</div>
-            <div className={`mb-3 rounded-lg px-3 py-2 text-sm font-medium ${emergency ? 'alarm bg-danger/10 text-danger' : 'bg-ok/10 text-ok'}`}>
-              {emergency ? 'Alerts: 1 ACTIVE EMERGENCY' : 'Alerts: None'}
-            </div>
-            <ul className="h-56 space-y-1.5 overflow-y-auto font-mono text-xs">
-              {logs.length === 0 && <li className="text-slate-500">No events yet.</li>}
-              {logs.map((l) => (
-                <li key={l.id} className={l.level === 'ALERT' ? 'text-danger' : 'text-slate-300'}>{l.text}</li>
-              ))}
-            </ul>
+            {activeTab !== 'dashboard' && (
+              <button
+                onClick={() => setActiveTab('dashboard')}
+                className="text-xs px-3 py-1.5 rounded-lg bg-cyan-500/15 border border-cyan-400/30 text-cyan-200 cursor-pointer"
+              >
+                Back to Dashboard
+              </button>
+            )}
           </div>
 
-          <div className="rounded-xl border border-line bg-card p-4 lg:col-span-3">
-            <div className="mb-3 flex items-center gap-2 text-sm font-semibold"><Activity size={16} /> Telemetry Trend</div>
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={history} margin={{ top: 5, right: 10, left: -15, bottom: 0 }}>
-                  <CartesianGrid stroke="#334155" strokeDasharray="3 3" />
-                  <XAxis dataKey="time" stroke="#64748b" fontSize={10} tick={false} />
-                  <YAxis yAxisId="t" stroke="#06B6D4" fontSize={11} domain={[20, 50]} />
-                  <YAxis yAxisId="a" orientation="right" stroke="#10B981" fontSize={11} domain={[0, 300]} />
-                  <Tooltip contentStyle={{ background: '#0F172A', border: '1px solid #334155', borderRadius: 8 }} />
-                  <Legend />
-                  <Line yAxisId="t" type="monotone" dataKey="temp" name="Temperature (°C)" stroke="#06B6D4" strokeWidth={2} dot={false} isAnimationActive={false} />
-                  <Line yAxisId="a" type="monotone" dataKey="aqi" name="Air Quality (AQI)" stroke="#10B981" strokeWidth={2} dot={false} isAnimationActive={false} />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-        </section>
+          {activeTab === 'dashboard' ? (
+            <>
+              {/* Top 4 Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+                <div
+                  onClick={() => setActiveTab('smart-homes')}
+                  className="rounded-2xl bg-[#082636] border border-cyan-500/25 p-4 flex items-center justify-between cursor-pointer hover:border-cyan-400/50"
+                >
+                  <Home className="w-7 h-7 text-cyan-300" />
+                  <div className="text-right">
+                    <p className="text-xs text-slate-300">Smart Homes</p>
+                    <p className="text-xl font-bold text-white">
+                      {telemetry.smartHomesCount.toLocaleString()}{' '}
+                      <span className="text-xs text-emerald-400">
+                        ↑ {telemetry.smartHomesDelta}
+                      </span>
+                    </p>
+                  </div>
+                </div>
+
+                <div
+                  onClick={() => setActiveTab('smart-traffic')}
+                  className="rounded-2xl bg-[#082636] border border-cyan-500/25 p-4 flex items-center justify-between cursor-pointer hover:border-cyan-400/50"
+                >
+                  <Car className="w-7 h-7 text-cyan-300" />
+                  <div className="text-right">
+                    <p className="text-xs text-slate-300">Traffic Flow</p>
+                    <p className="text-xl font-bold text-white">
+                      {telemetry.trafficFlow}%{' '}
+                      <span className="text-xs text-emerald-400">
+                        ↑ {telemetry.trafficDelta}
+                      </span>
+                    </p>
+                  </div>
+                </div>
+
+                <div
+                  onClick={() => setActiveTab('air-quality')}
+                  className="rounded-2xl bg-[#082636] border border-cyan-500/25 p-4 flex items-center justify-between cursor-pointer hover:border-cyan-400/50"
+                >
+                  <Wind className="w-7 h-7 text-emerald-300" />
+                  <div className="text-right">
+                    <p className="text-xs text-slate-300">Air Quality</p>
+                    <p className="text-xl font-bold text-white">
+                      {telemetry.airQualityLabel}
+                    </p>
+                  </div>
+                </div>
+
+                <div
+                  onClick={() => setActiveTab('waste-management')}
+                  className="rounded-2xl bg-[#082636] border border-cyan-500/25 p-4 flex items-center justify-between cursor-pointer hover:border-cyan-400/50"
+                >
+                  <Trash2 className="w-7 h-7 text-cyan-300" />
+                  <div className="text-right">
+                    <p className="text-xs text-slate-300">Waste Level</p>
+                    <p className="text-xl font-bold text-white">
+                      {telemetry.wasteLevel}%{' '}
+                      <span className="text-xs text-amber-400">
+                        ↑ {telemetry.wasteDelta}
+                      </span>
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Middle Row */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+                <div className="lg:col-span-5 rounded-2xl border border-cyan-500/25 bg-[#082636] p-5 flex flex-col justify-between">
+                  <div className="border-l-4 border-cyan-400 pl-3">
+                    <h2 className="text-lg font-bold text-white">
+                      Welcome Back, Admin
+                    </h2>
+                    <p className="text-xs text-cyan-100/80 mt-0.5">
+                      NEOM City is working smoothly today.
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-2 mt-5 text-xs">
+                    <div className="rounded-xl bg-[#04141c] p-2.5 border border-cyan-500/20">
+                      <span className="text-slate-400 block">Temp</span>
+                      <strong className="text-white">{telemetry.temperature}°C</strong>
+                    </div>
+                    <div className="rounded-xl bg-[#04141c] p-2.5 border border-cyan-500/20">
+                      <span className="text-slate-400 block">Soil / Water</span>
+                      <strong className="text-white">
+                        {telemetry.soilMoisture}% / {telemetry.waterLevel}%
+                      </strong>
+                    </div>
+                    <div className="rounded-xl bg-[#04141c] p-2.5 border border-cyan-500/20">
+                      <span className="text-slate-400 block">Solar</span>
+                      <strong className="text-emerald-300">
+                        {telemetry.solarOutputKw} kW
+                      </strong>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="lg:col-span-4 rounded-2xl border border-cyan-500/25 bg-[#082636] p-4 flex flex-col justify-between">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-semibold text-white flex items-center gap-1.5">
+                      <MapPin className="w-4 h-4 text-cyan-300" />
+                      City Map
+                    </span>
+                    <span className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300">
+                      Live
+                    </span>
+                  </div>
+                  <div className="h-36 rounded-xl bg-[#04141c] border border-cyan-500/20 flex items-center justify-center text-xs text-cyan-200">
+                    NEOM City Sector Grid
+                  </div>
+                </div>
+
+                <div className="lg:col-span-3 rounded-2xl border border-cyan-500/25 bg-[#082636] p-4 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-semibold text-white">
+                      Recent Alerts
+                    </span>
+                    <button
+                      onClick={() => setActiveTab('control-center')}
+                      className="text-xs text-cyan-300 cursor-pointer"
+                    >
+                      View All →
+                    </button>
+                  </div>
+
+                  {telemetry.alerts.map((a) => (
+                    <div
+                      key={a.id}
+                      className="flex items-center justify-between rounded-xl bg-[#04141c] px-3 py-2 text-xs"
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        {a.type === 'danger' && (
+                          <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
+                        )}
+                        {a.type === 'warning' && (
+                          <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
+                        )}
+                        {a.type === 'info' && (
+                          <Info className="w-4 h-4 text-cyan-400 shrink-0" />
+                        )}
+                        {a.type === 'success' && (
+                          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                        )}
+                        <div className="truncate">
+                          <p className="font-semibold text-white truncate">{a.title}</p>
+                          <p className="text-[11px] text-slate-400 truncate">
+                            {a.subtitle}
+                          </p>
+                        </div>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-slate-500 shrink-0" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Bottom Row */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+                <div className="lg:col-span-4 rounded-2xl border border-cyan-500/25 bg-[#082636] p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-sm font-semibold text-white flex items-center gap-1.5">
+                      <Activity className="w-4 h-4 text-cyan-300" />
+                      System Status
+                    </span>
+                    <span className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300">
+                      Live
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-around py-1">
+                    <div className="w-20 h-20 rounded-full border-4 border-emerald-400 bg-[#04141c] flex flex-col items-center justify-center">
+                      <span className="text-base font-bold text-white">
+                        {telemetry.systemHealth.overall}%
+                      </span>
+                      <span className="text-[9px] text-slate-400">Health</span>
+                    </div>
+
+                    <div className="text-xs space-y-1.5">
+                      <p>Online: <strong>{telemetry.systemHealth.online}</strong></p>
+                      <p>Warning: <strong>{telemetry.systemHealth.warning}</strong></p>
+                      <p>Offline: <strong>{telemetry.systemHealth.offline}</strong></p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="lg:col-span-4 rounded-2xl border border-cyan-500/25 bg-[#082636] p-4 flex flex-col justify-between">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-semibold text-white flex items-center gap-1.5">
+                      <Zap className="w-4 h-4 text-amber-300" />
+                      Energy Consumption
+                    </span>
+                    <span className="text-sm font-bold text-white">
+                      {telemetry.energyEfficiency}%
+                    </span>
+                  </div>
+
+                  <div className="h-24 w-full mt-2">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={telemetry.weeklyEnergy}>
+                        <XAxis
+                          dataKey="day"
+                          tick={{ fill: '#94a3b8', fontSize: 10 }}
+                          axisLine={false}
+                          tickLine={false}
+                        />
+                        <Tooltip />
+                        <Area
+                          type="monotone"
+                          dataKey="consumption"
+                          stroke="#22d3ee"
+                          fill="#22d3ee"
+                          fillOpacity={0.25}
+                        />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+
+                <div className="lg:col-span-4 rounded-2xl border border-cyan-500/25 bg-[#082636] p-4 flex flex-col justify-between">
+                  <span className="text-sm font-semibold text-white mb-2">
+                    Quick Actions
+                  </span>
+                  <div className="grid grid-cols-4 gap-2 my-auto">
+                    <button
+                      onClick={() => handleQuickAction('gate')}
+                      className="rounded-xl p-2.5 bg-[#04141c] border border-cyan-500/20 flex flex-col items-center gap-1 text-[11px] cursor-pointer"
+                    >
+                      <DoorOpen className="w-4 h-4 text-cyan-300" />
+                      <span>{telemetry.gateOpen ? 'Gate Open' : 'Open Gate'}</span>
+                    </button>
+                    <button
+                      onClick={() => handleQuickAction('parking')}
+                      className="rounded-xl p-2.5 bg-[#04141c] border border-cyan-500/20 flex flex-col items-center gap-1 text-[11px] cursor-pointer"
+                    >
+                      <ParkingSquare className="w-4 h-4 text-cyan-300" />
+                      <span>Parking</span>
+                    </button>
+                    <button
+                      onClick={() => handleQuickAction('alert')}
+                      className="rounded-xl p-2.5 bg-[#04141c] border border-cyan-500/20 flex flex-col items-center gap-1 text-[11px] cursor-pointer"
+                    >
+                      <Siren className="w-4 h-4 text-rose-400" />
+                      <span>Send Alert</span>
+                    </button>
+                    <button
+                      onClick={() => handleQuickAction('reports')}
+                      className="rounded-xl p-2.5 bg-[#04141c] border border-cyan-500/20 flex flex-col items-center gap-1 text-[11px] cursor-pointer"
+                    >
+                      <BarChart3 className="w-4 h-4 text-cyan-300" />
+                      <span>Reports</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </>
+          ) : (
+            (() => {
+              const zone =
+                ZONES_GUIDE_DETAILS[activeTab] || ZONES_GUIDE_DETAILS['smart-homes'];
+              return (
+                <div className="rounded-2xl border border-cyan-500/25 bg-[#082636] p-5 space-y-3">
+                  <h2 className="text-lg font-bold text-white">{zone.title}</h2>
+                  <p className="text-xs text-cyan-200">Sensors: {zone.sensors}</p>
+                  <p className="text-xs text-cyan-200">Actuators: {zone.actuators}</p>
+                  <p className="text-sm text-slate-300">{zone.scenario}</p>
+                </div>
+              );
+            })()
+          )}
+        </main>
       </div>
     </div>
-  )
+  );
 }
